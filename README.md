@@ -3,7 +3,7 @@ World of Warcraft Guild Website Backend
 
 This is a backend for a simple one-page World of Warcraft guild website, handles connections to the new blizzard API and raider IO API.
 
-Showcase: www.residuum.cz
+Showcase: www.residuum.cz (page is a modification of https://github.com/mdamyanova/ella)
 Available service endpoints: 
 - GET /api/raidprogress (Displays filtered raid json list of your guild)
 - GET /api/guildroster (Displays members with rank X and up, along with their best mythic score)
