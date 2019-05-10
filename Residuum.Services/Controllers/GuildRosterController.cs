@@ -35,7 +35,10 @@ namespace Residuum.Services.Controllers
                     Rank = member.Rank,
                     BestMythic = bestMythic
                 });
+               
             }
+
+            guildMembers.OrderByDescending(member => member.BestMythic.Difficulty);
 
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
 
