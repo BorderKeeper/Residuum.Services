@@ -34,7 +34,7 @@ namespace Residuum.Services
         {
             if (ShouldUpdateCache(CachedGuild.LastUpdated))
             {
-               UpdateGuildCache(CachedGuild);
+               _ = UpdateGuildCache(CachedGuild);
             }
 
             return CachedGuild.Item;
@@ -44,7 +44,7 @@ namespace Residuum.Services
         {
             if (ShouldUpdateCache(CachedRaidProgress.LastUpdated))
             {
-                UpdateRaidProgress(CachedRaidProgress);
+                _ = UpdateRaidProgress(CachedRaidProgress);
             }
 
             return CachedRaidProgress.Item;
@@ -65,14 +65,7 @@ namespace Residuum.Services
 
             if (ShouldUpdateCache(cachedItem.LastUpdated))
             {
-                Task.Run(() =>
-                {
-                    var updatedBestMythic = GetBestMythicFromApi(realm, player);
-
-                    Task.WaitAll(updatedBestMythic);
-
-                    CachedBestMythics[player] = new Timestamped<Mythic>(updatedBestMythic.Result);
-                });
+                _ = UpdateBestMythic(realm, player);
             }
 
             return cachedItem.Item;
@@ -105,6 +98,13 @@ namespace Residuum.Services
 
             CachedRaidProgress.Item = progression;
             CachedRaidProgress.LastUpdated = DateTime.Now;
+        }
+
+        private static async Task UpdateBestMythic(string realm, string player)
+        {
+            var updatedBestMythic = await GetBestMythicFromApi(realm, player);
+
+            CachedBestMythics[player] = new Timestamped<Mythic>(updatedBestMythic);
         }
 
         public static async Task<Mythic> GetBestMythicFromApi(string realm, string player)
