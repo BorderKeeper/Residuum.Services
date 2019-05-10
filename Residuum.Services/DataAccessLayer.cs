@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using ArgentPonyWarcraftClient;
 using Residuum.Services.Entities;
@@ -11,7 +10,7 @@ namespace Residuum.Services
 {
     public static class DataAccessLayer
     {
-        private const int CacheForMinutes = 60;
+        private const int CacheForMinutes = 120;
 
         private static Timestamped<Guild> CachedGuild { get; set; }
 
@@ -21,21 +20,21 @@ namespace Residuum.Services
 
         public static void Initialize()
         {
-            var guild = GetGuildFromApi();
-            var raidProgress = GetRaidProgressFromApi();
-
-            CachedGuild = new Timestamped<Guild>(guild.Result);
-            CachedRaidProgress = new Timestamped<RaidProgress>(raidProgress.Result);
+            CachedGuild = new Timestamped<Guild>();
+            CachedRaidProgress = new Timestamped<RaidProgress>();
             CachedBestMythics = new Dictionary<string, Timestamped<Mythic>>();
 
-            Task.WaitAll(guild, raidProgress);
+            var guildUpdateTask = UpdateGuildCache(CachedGuild);
+            var raidProgressUpdateTask = UpdateRaidProgress(CachedRaidProgress);
+           
+            Task.WaitAll(guildUpdateTask, raidProgressUpdateTask);
         }
 
         public static async Task<Guild> GetGuild()
         {
             if (ShouldUpdateCache(CachedGuild.LastUpdated))
             {
-                CachedGuild.Item = await GetGuildFromApi();
+               UpdateGuildCache(CachedGuild);
             }
 
             return CachedGuild.Item;
@@ -45,7 +44,7 @@ namespace Residuum.Services
         {
             if (ShouldUpdateCache(CachedRaidProgress.LastUpdated))
             {
-                CachedRaidProgress.Item = await GetRaidProgressFromApi();
+                UpdateRaidProgress(CachedRaidProgress);
             }
 
             return CachedRaidProgress.Item;
@@ -66,13 +65,20 @@ namespace Residuum.Services
 
             if (ShouldUpdateCache(cachedItem.LastUpdated))
             {
-                CachedBestMythics[player] = new Timestamped<Mythic>(await GetBestMythicFromApi(realm, player));
+                Task.Run(() =>
+                {
+                    var updatedBestMythic = GetBestMythicFromApi(realm, player);
+
+                    Task.WaitAll(updatedBestMythic);
+
+                    CachedBestMythics[player] = new Timestamped<Mythic>(updatedBestMythic.Result);
+                });
             }
 
             return cachedItem.Item;
         }
 
-        private static async Task<Guild> GetGuildFromApi()
+        private static async Task UpdateGuildCache(Timestamped<Guild> CachedGuild)
         {
             var warcraftClient = new WarcraftClient(ServiceConfiguration.BlizzardAuthentication.ClientId,
                 ServiceConfiguration.BlizzardAuthentication.Secret, Region.Europe, Locale.en_GB);
@@ -80,16 +86,25 @@ namespace Residuum.Services
             RequestResult<Guild> guild = await warcraftClient.GetGuildAsync(ServiceConfiguration.RealmName,
                 ServiceConfiguration.GuildName, GuildFields.Members);
 
-            return guild.Value;
+            if (guild.Success)
+            {
+                CachedGuild.Item = guild.Value;
+                CachedGuild.LastUpdated = DateTime.Now;
+            }
+            else
+            {
+                throw new InvalidOperationException("Guild could not be loaded");
+            }
         }
 
-        private static async Task<RaidProgress> GetRaidProgressFromApi()
+        private static async Task UpdateRaidProgress(Timestamped<RaidProgress> CachedRaidProgress)
         {
             var client = new RaiderClient();
 
             var progression = await client.GetGuildProgress(ServiceConfiguration.RealmName, ServiceConfiguration.GuildName);
 
-            return progression;
+            CachedRaidProgress.Item = progression;
+            CachedRaidProgress.LastUpdated = DateTime.Now;
         }
 
         public static async Task<Mythic> GetBestMythicFromApi(string realm, string player)
@@ -107,10 +122,15 @@ namespace Residuum.Services
 
             public DateTime LastUpdated { get; set; }
 
+            public Timestamped()
+            {
+                LastUpdated = DateTime.Now;       
+            }
+
             public Timestamped(T item)
             {
+                Item = item;
                 LastUpdated = DateTime.Now;
-                Item = item;             
             }
         }
 
