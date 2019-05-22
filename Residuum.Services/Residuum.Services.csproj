@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="ArgentPonyWarcraftClient" Version="3.0.1" />
+    <PackageReference Include="EntityFramework" Version="6.2.0" />
     <PackageReference Include="Microsoft.AspNet.Mvc" Version="5.2.7" />
     <PackageReference Include="Microsoft.AspNet.WebApi.Core" Version="5.2.7" />
     <PackageReference Include="Microsoft.AspNetCore.App" />

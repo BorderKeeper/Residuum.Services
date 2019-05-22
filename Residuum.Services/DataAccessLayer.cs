@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using ArgentPonyWarcraftClient;
 using Residuum.Services.Entities;
 using Residuum.Services.QueryHandlers;
+using Residuum.Services.Readers;
 using Guild = ArgentPonyWarcraftClient.Guild;
 
 namespace Residuum.Services
@@ -11,12 +13,6 @@ namespace Residuum.Services
     public static class DataAccessLayer
     {
         private const int CacheForMinutes = 120;
-
-        private static Timestamped<Guild> CachedGuild { get; set; }
-
-        private static Timestamped<RaidProgress> CachedRaidProgress { get; set; }
-
-        private static Dictionary<string, Timestamped<Mythic>> CachedBestMythics { get; set; }
 
         public static void Initialize()
         {
@@ -52,16 +48,20 @@ namespace Residuum.Services
 
         public static async Task<Mythic> GetBestMythic(string realm, string player)
         {
-            if (!CachedBestMythics.ContainsKey(player))
+            var accessor = new CachedBestMythicAccessor();
+
+            var cachedBestMythic = accessor.GetBestMythic(player);
+
+            if (!cachedBestMythic.Any())
             {
                 var bestMythic = await GetBestMythicFromApi(realm, player);
 
-                CachedBestMythics.Add(player, new Timestamped<Mythic>(bestMythic));
+                accessor.SetBestMythic(player, bestMythic);
 
                 return bestMythic;
             }
 
-            var cachedItem = CachedBestMythics[player];
+            var cachedItem = cachedBestMythic.Single();
 
             if (ShouldUpdateCache(cachedItem.LastUpdated))
             {
@@ -114,24 +114,6 @@ namespace Residuum.Services
             var bestMythic = await client.GetBestMythic(realm, player);
 
             return bestMythic;
-        }
-
-        private class Timestamped<T>
-        {
-            public T Item { get; set; }
-
-            public DateTime LastUpdated { get; set; }
-
-            public Timestamped()
-            {
-                LastUpdated = DateTime.Now;       
-            }
-
-            public Timestamped(T item)
-            {
-                Item = item;
-                LastUpdated = DateTime.Now;
-            }
         }
 
         private static bool ShouldUpdateCache(DateTime lastUpdated)

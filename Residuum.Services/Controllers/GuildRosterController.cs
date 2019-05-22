@@ -13,7 +13,7 @@ namespace Residuum.Services.Controllers
     [ApiController]   
     public class GuildRosterController : ControllerBase
     {
-        private const int RaiderRank = 4;
+        private const int RaiderRank = 6;
 
         [HttpGet]
         public async Task<string> Get()
