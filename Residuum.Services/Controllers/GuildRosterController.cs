@@ -13,7 +13,7 @@ namespace Residuum.Services.Controllers
     [ApiController]   
     public class GuildRosterController : ControllerBase
     {
-        private const int RaiderRank = 4;
+        private const int ShowPeopleLimit = 30;
 
         [HttpGet]
         public async Task<string> Get()
@@ -38,7 +38,7 @@ namespace Residuum.Services.Controllers
                
             }
 
-            guildMembers = guildMembers.OrderByDescending(member => member.BestMythic.Difficulty).ToList();
+            guildMembers = guildMembers.OrderByDescending(member => member.BestMythic.Difficulty).Take(ShowPeopleLimit).ToList();
 
             Response.Headers.Add("Access-Control-Allow-Origin", "*");
 
@@ -49,9 +49,7 @@ namespace Residuum.Services.Controllers
         {
             RequestResult<Guild> guild = await DataAccessLayer.GetGuild();
 
-            var nonAltsGuildMembers = guild.Value.Members.Where(member => member.Rank <= RaiderRank);
-
-            return nonAltsGuildMembers;
+            return guild.Value.Members;
         }
     }
 }
