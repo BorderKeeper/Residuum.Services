@@ -23,12 +23,19 @@ namespace Residuum.Services.QueryHandlers
             var fieldName = "mythic_plus_highest_level_runs";
             var url = $"https://raider.io/api/v1/characters/profile?region=eu&realm={realmName}&name={playerName}&fields={fieldName}";
 
-            var data = await RetrieveData<MythicRaiderData>(url);
+            try
+            {
+                var data = await RetrieveData<MythicRaiderData>(url);
 
-            var bestMythicRun = data.BestMythicRuns.Any() ? data.BestMythicRuns.First() : Mythic.EmptyMythic;
-            bestMythicRun.ProfileUri = data.ProfileUri;
+                var bestMythicRun = data.BestMythicRuns.Any() ? data.BestMythicRuns.First() : Mythic.EmptyMythic;
+                bestMythicRun.ProfileUri = data.ProfileUri;
 
-            return bestMythicRun;
+                return bestMythicRun;
+            }
+            catch (HttpRequestException ex)
+            {
+                return Mythic.EmptyMythic;
+            }
         }
 
         private async Task<T> RetrieveData<T>(string baseUrl)
@@ -38,16 +45,9 @@ namespace Residuum.Services.QueryHandlers
         {
             using (HttpClient client = new HttpClient())
             {
-                try
-                {
-                    HttpResponseMessage message = await client.GetAsync(url);
-                    message.EnsureSuccessStatusCode();
-                    return await message.Content.ReadAsStringAsync();
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception(ex.Message, ex);
-                }
+                HttpResponseMessage message = await client.GetAsync(url);
+                message.EnsureSuccessStatusCode();
+                return await message.Content.ReadAsStringAsync();
             }
         }
 
