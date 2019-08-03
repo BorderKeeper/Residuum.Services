@@ -7,6 +7,6 @@ namespace Residuum.Services.Entities
         [Key]
         public string Name { get; set; }
 
-        public Timestamped<Mythic> MythicRun { get; set; }
+        public Mythic MythicRun { get; set; }
     }
 }

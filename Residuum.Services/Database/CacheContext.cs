@@ -1,18 +1,17 @@
-﻿using ArgentPonyWarcraftClient;
+﻿using Microsoft.EntityFrameworkCore;
 using Residuum.Services.Entities;
-using System.Data.Entity;
 
 namespace Residuum.Services.Database
 {
     public class CacheContext : DbContext
     {
-        public CacheContext() : base("CacheContext")
+        public CacheContext(DbContextOptions options) : base(options)
         {
         }
 
-        public DbSet<Timestamped<Guild>> Guilds { get; set; }
+        public DbSet<GuildMember> GuildMembers { get; set; }
 
-        public DbSet<Timestamped<RaidProgress>> RaidProgress { get; set; }
+        public DbSet<RaidProgress> RaidProgress { get; set; }
 
         public DbSet<BestMythicRun> BestMythicRuns { get; set; }
     }

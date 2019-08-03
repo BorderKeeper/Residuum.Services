@@ -1,4 +1,7 @@
-﻿namespace Residuum.Services
+﻿using Microsoft.EntityFrameworkCore;
+using Residuum.Services.Database;
+
+namespace Residuum.Services
 {
     public static class ServiceConfiguration
     {
@@ -9,6 +12,10 @@
         public static string GuildName { get; set; }
 
         public static string PageUri { get; set; }
+
+        public static string DatabaseConnectionString { get; set; }
+
+        public static DbContextOptionsBuilder<CacheContext> CacheContextOptionsBuilder { get; set; }
 
         public static bool OverrideRaidProgressionSummary { get; set; }
     }

@@ -8,44 +8,38 @@ namespace Residuum.Services.Readers
 {
     public class CachedBestMythicAccessor
     {
-        public IEnumerable<Timestamped<Mythic>> GetBestMythic(string name)
+        public IEnumerable<Mythic> GetBestMythic(CacheContext context, string name)
         {
-            using(var cacheDatabase = new CacheContext())
+            var run = context.BestMythicRuns.Find(name);
+
+            if (run != null)
             {
-                var run = cacheDatabase.BestMythicRuns.Find(name);
-
-                if (run != null)
-                {
-                    return new List<Timestamped<Mythic>> { run.MythicRun };
-                }
-
-                return Enumerable.Empty<Timestamped<Mythic>>();
+                return new List<Mythic> { run.MythicRun };
             }
+
+            return Enumerable.Empty<Mythic>();
         }
 
-        public void SetBestMythic(string name, Mythic mythic)
+        public void SetBestMythic(CacheContext context, string name, Mythic mythic)
         {
             var newMythicRun = new BestMythicRun
             {
-                MythicRun = new Timestamped<Mythic>(mythic) { LastUpdated = DateTime.Now },
+                MythicRun = mythic,
                 Name = name
             };
          
-            using (var cacheDatabase = new CacheContext())
+            var existingCachedMythic = context.BestMythicRuns.Find(name);
+
+            if (existingCachedMythic != null)
             {
-                var existingCachedMythic = cacheDatabase.BestMythicRuns.Find(name);
-
-                if (existingCachedMythic != null)
-                {
-                    cacheDatabase.Entry(existingCachedMythic).CurrentValues.SetValues(existingCachedMythic);
-                }
-                else
-                {
-                    cacheDatabase.BestMythicRuns.Add(existingCachedMythic);
-                }
-
-                cacheDatabase.SaveChanges();
+                context.Entry(existingCachedMythic).CurrentValues.SetValues(existingCachedMythic);
             }
+            else
+            {
+                context.BestMythicRuns.Add(existingCachedMythic);
+            }
+
+            context.SaveChanges();
         }
     }
 }
