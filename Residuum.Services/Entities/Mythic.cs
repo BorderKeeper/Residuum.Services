@@ -12,11 +12,13 @@ namespace Residuum.Services.Entities
         }
 
         [Key]
+        public string Id { get; set; }
+      
         [JsonProperty("short_name")]
-        public string ShortName { get; set; }
+        public string DungeonShortName { get; set; }
 
         [JsonProperty("dungeon")]
-        public string Name { get; set; }
+        public string DungeonName { get; set; }
 
         [JsonProperty("mythic_level")]
         public int Difficulty { get; set; }
@@ -30,7 +32,7 @@ namespace Residuum.Services.Entities
 
         public static Mythic EmptyMythic
         {
-            get { return new Mythic { Difficulty = 0, Upgrades = 0, Name = "None", ShortName = "N", ProfileUri = string.Empty, LastUpdated = DateTime.Now }; }
+            get { return new Mythic { Difficulty = 0, Upgrades = 0, DungeonName = "None", DungeonShortName = "N", ProfileUri = string.Empty, LastUpdated = DateTime.Now }; }
         }
     }
 }

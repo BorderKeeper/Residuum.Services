@@ -2,14 +2,22 @@
 using Residuum.Services.Entities;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 
 namespace Residuum.Services.Readers
 {
     public class CachedRaidProgressAccessor
     {
-        public IEnumerable<RaidProgress> GetRaidProgress(CacheContext context)
+        private CacheContext _context;
+
+        public CachedRaidProgressAccessor(CacheContext context)
         {
-            var cachedRaidProgress = context.RaidProgress.First();
+            _context = context;
+        }
+
+        public IEnumerable<RaidProgress> GetRaidProgress()
+        {
+            var cachedRaidProgress = GetRaidProgressWithRaidInfo();
 
             if (cachedRaidProgress != null)
             {
@@ -19,20 +27,28 @@ namespace Residuum.Services.Readers
             return Enumerable.Empty<RaidProgress>();
         }
 
-        public void SetRaidProgress(CacheContext context, RaidProgress raidProgress)
+        public void SetRaidProgress(RaidProgress raidProgress)
         {
-            var existingRaidProgress = context.RaidProgress.First();
-
-            if (existingRaidProgress != null)
+            if (_context.RaidProgress.Any())
             {
-                context.Entry(existingRaidProgress).CurrentValues.SetValues(raidProgress);
+                var existingRaidProgress = _context.RaidProgress.First();
+
+                _context.Entry(existingRaidProgress).CurrentValues.SetValues(raidProgress);
             }
             else
             {
-                context.RaidProgress.Add(raidProgress);
+                _context.RaidProgress.Add(raidProgress);
             }
 
-            context.SaveChanges();
+            _context.SaveChanges();
+        }
+
+        private RaidProgress GetRaidProgressWithRaidInfo()
+        {
+            return _context.RaidProgress
+                .Include(progress => progress.RaidInfo)
+                .ThenInclude(raidinfo => raidinfo.Details)
+                .First();
         }
     }
 }

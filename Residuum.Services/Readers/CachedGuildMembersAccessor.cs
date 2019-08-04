@@ -6,18 +6,25 @@ namespace Residuum.Services.Readers
 {
     public class CachedGuildMembersAccessor
     {
-        public IEnumerable<GuildMember> GetGuildMembers(CacheContext context)
+        private CacheContext _context;
+
+        public CachedGuildMembersAccessor(CacheContext context)
         {
-            return context.GuildMembers;
+            _context = context;
         }
 
-        public void SetGuildMembers(CacheContext context, IEnumerable<GuildMember> guildMembers)
+        public IEnumerable<GuildMember> GetGuildMembers()
         {
-            context.GuildMembers.RemoveRange(context.GuildMembers);
+            return _context.GuildMembers;
+        }
 
-            context.GuildMembers.AddRange(guildMembers);
+        public void SetGuildMembers(IEnumerable<GuildMember> guildMembers)
+        {
+            _context.GuildMembers.RemoveRange(_context.GuildMembers);
 
-            context.SaveChanges();
+            _context.GuildMembers.AddRange(guildMembers);
+
+            _context.SaveChanges();
         }
     }
 }

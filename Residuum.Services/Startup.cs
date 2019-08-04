@@ -28,10 +28,8 @@ namespace Residuum.Services
             ServiceConfiguration.RealmName = configuration["Guild:Realm"];
             ServiceConfiguration.OverrideRaidProgressionSummary = configuration["Guild:OverrideRaidProgressionSummary"].Equals("True", StringComparison.InvariantCultureIgnoreCase);
 
-            ServiceConfiguration.DatabaseConnectionString = configuration["ConnectionStrings:MainConnection"];
+            ServiceConfiguration.DatabaseConnectionString = configuration["ConnectionStrings:CacheContext"];
             ServiceConfiguration.PageUri = configuration["Page:Uri"];
-
-            _cache = new DataCache();
         }
 
         public IConfiguration Configuration { get; }
@@ -46,9 +44,6 @@ namespace Residuum.Services
 
             services.AddDbContext<CacheContext>(
                 item => item.UseSqlServer(ServiceConfiguration.DatabaseConnectionString));
-
-            
-            _cache.Initialize(new CacheContext(builder.Options));
 
             services.AddTransient<IHttpContextAccessor, HttpContextAccessor>();
         }

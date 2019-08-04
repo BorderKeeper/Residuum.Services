@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using Residuum.Services.Database;
 using Residuum.Services.Entities;
 
@@ -8,9 +8,16 @@ namespace Residuum.Services.Readers
 {
     public class CachedBestMythicAccessor
     {
-        public IEnumerable<Mythic> GetBestMythic(CacheContext context, string name)
+        private CacheContext _context;
+
+        public CachedBestMythicAccessor(CacheContext context)
         {
-            var run = context.BestMythicRuns.Find(name);
+            _context = context;
+        }
+
+        public IEnumerable<Mythic> GetBestMythic(string name)
+        {
+            var run = FindRun(name);
 
             if (run != null)
             {
@@ -20,7 +27,7 @@ namespace Residuum.Services.Readers
             return Enumerable.Empty<Mythic>();
         }
 
-        public void SetBestMythic(CacheContext context, string name, Mythic mythic)
+        public void SetBestMythic(string name, Mythic mythic)
         {
             var newMythicRun = new BestMythicRun
             {
@@ -28,18 +35,23 @@ namespace Residuum.Services.Readers
                 Name = name
             };
          
-            var existingCachedMythic = context.BestMythicRuns.Find(name);
+            var existingCachedMythic = FindRun(name);
 
             if (existingCachedMythic != null)
             {
-                context.Entry(existingCachedMythic).CurrentValues.SetValues(existingCachedMythic);
+                _context.Entry(existingCachedMythic).CurrentValues.SetValues(newMythicRun);
             }
             else
             {
-                context.BestMythicRuns.Add(existingCachedMythic);
+                _context.BestMythicRuns.Add(newMythicRun);
             }
 
-            context.SaveChanges();
+            _context.SaveChanges();
+        }
+
+        private BestMythicRun FindRun(string name)
+        {
+            return _context.BestMythicRuns.Include(run => run.MythicRun).SingleOrDefault(run => run.Name.Equals(name));
         }
     }
 }

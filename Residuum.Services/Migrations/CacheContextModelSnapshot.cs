@@ -24,7 +24,11 @@ namespace Residuum.Services.Migrations
                     b.Property<string>("Name")
                         .ValueGeneratedOnAdd();
 
+                    b.Property<string>("MythicRunId");
+
                     b.HasKey("Name");
+
+                    b.HasIndex("MythicRunId");
 
                     b.ToTable("BestMythicRuns");
                 });
@@ -49,24 +53,22 @@ namespace Residuum.Services.Migrations
 
             modelBuilder.Entity("Residuum.Services.Entities.Mythic", b =>
                 {
-                    b.Property<string>("ShortName")
+                    b.Property<string>("Id")
                         .ValueGeneratedOnAdd();
 
                     b.Property<int>("Difficulty");
 
-                    b.Property<DateTime>("LastUpdated");
+                    b.Property<string>("DungeonName");
 
-                    b.Property<string>("Name");
+                    b.Property<string>("DungeonShortName");
+
+                    b.Property<DateTime>("LastUpdated");
 
                     b.Property<string>("ProfileUri");
 
                     b.Property<int>("Upgrades");
 
-                    b.HasKey("ShortName");
-
-                    b.HasIndex("Name")
-                        .IsUnique()
-                        .HasFilter("[Name] IS NOT NULL");
+                    b.HasKey("Id");
 
                     b.ToTable("Mythic");
                 });
@@ -127,11 +129,11 @@ namespace Residuum.Services.Migrations
                     b.ToTable("RaidProgress");
                 });
 
-            modelBuilder.Entity("Residuum.Services.Entities.Mythic", b =>
+            modelBuilder.Entity("Residuum.Services.Entities.BestMythicRun", b =>
                 {
-                    b.HasOne("Residuum.Services.Entities.BestMythicRun")
-                        .WithOne("MythicRun")
-                        .HasForeignKey("Residuum.Services.Entities.Mythic", "Name");
+                    b.HasOne("Residuum.Services.Entities.Mythic", "MythicRun")
+                        .WithMany()
+                        .HasForeignKey("MythicRunId");
                 });
 
             modelBuilder.Entity("Residuum.Services.Entities.Progression", b =>

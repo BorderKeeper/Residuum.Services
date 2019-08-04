@@ -3,21 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Residuum.Services.Migrations
 {
-    public partial class initialMigration : Migration
+    public partial class Initial : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "BestMythicRuns",
-                columns: table => new
-                {
-                    Name = table.Column<string>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_BestMythicRuns", x => x.Name);
-                });
-
             migrationBuilder.CreateTable(
                 name: "GuildMembers",
                 columns: table => new
@@ -31,6 +20,23 @@ namespace Residuum.Services.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_GuildMembers", x => x.Name);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Mythic",
+                columns: table => new
+                {
+                    Id = table.Column<string>(nullable: false),
+                    DungeonShortName = table.Column<string>(nullable: true),
+                    DungeonName = table.Column<string>(nullable: true),
+                    Difficulty = table.Column<int>(nullable: false),
+                    Upgrades = table.Column<int>(nullable: false),
+                    ProfileUri = table.Column<string>(nullable: true),
+                    LastUpdated = table.Column<DateTime>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Mythic", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -65,24 +71,20 @@ namespace Residuum.Services.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Mythic",
+                name: "BestMythicRuns",
                 columns: table => new
                 {
-                    ShortName = table.Column<string>(nullable: false),
-                    Name = table.Column<string>(nullable: true),
-                    Difficulty = table.Column<int>(nullable: false),
-                    Upgrades = table.Column<int>(nullable: false),
-                    ProfileUri = table.Column<string>(nullable: true),
-                    LastUpdated = table.Column<DateTime>(nullable: false)
+                    Name = table.Column<string>(nullable: false),
+                    MythicRunId = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Mythic", x => x.ShortName);
+                    table.PrimaryKey("PK_BestMythicRuns", x => x.Name);
                     table.ForeignKey(
-                        name: "FK_Mythic_BestMythicRuns_Name",
-                        column: x => x.Name,
-                        principalTable: "BestMythicRuns",
-                        principalColumn: "Name",
+                        name: "FK_BestMythicRuns_Mythic_MythicRunId",
+                        column: x => x.MythicRunId,
+                        principalTable: "Mythic",
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -112,11 +114,9 @@ namespace Residuum.Services.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Mythic_Name",
-                table: "Mythic",
-                column: "Name",
-                unique: true,
-                filter: "[Name] IS NOT NULL");
+                name: "IX_BestMythicRuns_MythicRunId",
+                table: "BestMythicRuns",
+                column: "MythicRunId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Progression_DetailsSummary",
@@ -132,16 +132,16 @@ namespace Residuum.Services.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "GuildMembers");
+                name: "BestMythicRuns");
 
             migrationBuilder.DropTable(
-                name: "Mythic");
+                name: "GuildMembers");
 
             migrationBuilder.DropTable(
                 name: "Progression");
 
             migrationBuilder.DropTable(
-                name: "BestMythicRuns");
+                name: "Mythic");
 
             migrationBuilder.DropTable(
                 name: "ProgressionDetails");

@@ -23,15 +23,15 @@ namespace Residuum.Services.Controllers
 
         private readonly DataCache _cache;
 
-        public RaidProgressController()
+        public RaidProgressController(CacheContext context)
         {
-            _cache = new DataCache();
+            _cache = new DataCache(context);
         }
 
         [HttpGet]
-        public async Task<string> Get(CacheContext context)
+        public async Task<string> Get()
         {
-            var progression = await _cache.GetRaidProgress(context);
+            var progression = await _cache.GetRaidProgress();
 
             var filteredProgression = FilterProgression(progression);
 

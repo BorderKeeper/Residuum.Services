@@ -18,15 +18,15 @@ namespace Residuum.Services.Controllers
 
         private const int RaiderRank = 6;
 
-        public GuildRosterController()
+        public GuildRosterController(CacheContext context)
         {
-            _cache = new DataCache();
+            _cache = new DataCache(context);
         }
 
         [HttpGet]
-        public async Task<string> Get(CacheContext context)
+        public async Task<string> Get()
         {
-            var nonAltsGuildMembers = await GetGuildMembers(context);
+            var nonAltsGuildMembers = await GetGuildMembers();
 
             var guildMembers = new List<Character>();
 
@@ -34,7 +34,7 @@ namespace Residuum.Services.Controllers
 
             foreach (GuildMember member in nonAltsGuildMembers)
             {
-                var bestMythic = await _cache.GetBestMythic(context, member.Realm, member.Name);
+                var bestMythic = await _cache.GetBestMythic(member.Realm, member.Name);
 
                 guildMembers.Add(new Character
                 {
@@ -53,9 +53,9 @@ namespace Residuum.Services.Controllers
             return JsonConvert.SerializeObject(guildMembers);
         }
 
-        private async Task<IEnumerable<GuildMember>> GetGuildMembers(CacheContext context)
+        private async Task<IEnumerable<GuildMember>> GetGuildMembers()
         {
-            List<GuildMember> guildMembers = (await _cache.GetGuildMembers(context)).ToList();
+            List<GuildMember> guildMembers = (await _cache.GetGuildMembers()).ToList();
 
             var nonAltsGuildMembers = guildMembers.Where(member => member.Rank <= RaiderRank);
 

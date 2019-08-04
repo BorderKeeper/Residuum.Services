@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ArgentPonyWarcraftClient;
-using Newtonsoft.Json;
 using Residuum.Services.Database;
 using Residuum.Services.Entities;
 using Residuum.Services.QueryHandlers;
 using Residuum.Services.Readers;
 using Guild = ArgentPonyWarcraftClient.Guild;
 using GuildMember = Residuum.Services.Entities.GuildMember;
-using Progression = ArgentPonyWarcraftClient.Progression;
 
 namespace Residuum.Services
 {
@@ -24,52 +22,50 @@ namespace Residuum.Services
         private readonly CachedRaidProgressAccessor _cachedRaidProgressAccessor;
         private readonly CachedBestMythicAccessor _cachedBestMythicAccessor;
 
-        public DataCache()
+        public DataCache(CacheContext context)
         {
             _raiderClient = new RaiderClient();
-            _cachedGuildMembersAccessor = new CachedGuildMembersAccessor();
-            _cachedRaidProgressAccessor = new CachedRaidProgressAccessor();
-            _cachedBestMythicAccessor = new CachedBestMythicAccessor();
+            _cachedGuildMembersAccessor = new CachedGuildMembersAccessor(context);
+            _cachedRaidProgressAccessor = new CachedRaidProgressAccessor(context);
+            _cachedBestMythicAccessor = new CachedBestMythicAccessor(context);
         }
 
-        public void Initialize(CacheContext context)
+        public async Task Initialize()
         {
-            var guildUpdateTask = UpdateGuildMembersCache(context);
-            var raidProgressUpdateTask = UpdateRaidProgress(context);
-
-            Task.WaitAll(raidProgressUpdateTask);
+            await UpdateGuildMembersCache();
+            await UpdateRaidProgress();
         }
 
-        public async Task<IEnumerable<GuildMember>> GetGuildMembers(CacheContext context)
+        public async Task<IEnumerable<GuildMember>> GetGuildMembers()
         {
-            var guildMembers = _cachedGuildMembersAccessor.GetGuildMembers(context);
+            var guildMembers = _cachedGuildMembersAccessor.GetGuildMembers();
 
             if (!guildMembers.Any())
             {
                 var loadedGuildMembers = await GetGuildMembersFromApi();
 
-                _cachedGuildMembersAccessor.SetGuildMembers(context, loadedGuildMembers);
+                _cachedGuildMembersAccessor.SetGuildMembers(loadedGuildMembers);
 
                 return loadedGuildMembers;
             }
 
             if (guildMembers.Any(member => ShouldUpdateCache(member.LastUpdated)))
             {
-                _ = UpdateGuildMembersCache(context);
+                _ = UpdateGuildMembersCache();
             }
 
             return guildMembers;
         }
         
-        public async Task<RaidProgress> GetRaidProgress(CacheContext context)
+        public async Task<RaidProgress> GetRaidProgress()
         {
-            var raidProgressEntry = _cachedRaidProgressAccessor.GetRaidProgress(context);
+            var raidProgressEntry = _cachedRaidProgressAccessor.GetRaidProgress();
 
             if (!raidProgressEntry.Any())
             {
                 var loadedRaidProgress = await GetRaidProgressFromApi();
 
-                _cachedRaidProgressAccessor.SetRaidProgress(context, loadedRaidProgress);
+                _cachedRaidProgressAccessor.SetRaidProgress(loadedRaidProgress);
 
                 return loadedRaidProgress;
             }
@@ -78,21 +74,21 @@ namespace Residuum.Services
 
             if (ShouldUpdateCache(raidProgess.LastUpdated))
             {
-                _ = UpdateRaidProgress(context);
+                _ = UpdateRaidProgress();
             }
 
             return raidProgess;
         }
 
-        public async Task<Mythic> GetBestMythic(CacheContext context, string realm, string player)
+        public async Task<Mythic> GetBestMythic(string realm, string player)
         {
-            var bestMythicEntry = _cachedBestMythicAccessor.GetBestMythic(context, player);
+            var bestMythicEntry = _cachedBestMythicAccessor.GetBestMythic(player);
 
             if (!bestMythicEntry.Any())
             {
                 var loadedBestMythic = await GetBestMythicFromApi(realm, player);
 
-                _cachedBestMythicAccessor.SetBestMythic(context, player, loadedBestMythic);
+                _cachedBestMythicAccessor.SetBestMythic(player, loadedBestMythic);
 
                 return loadedBestMythic;
             }
@@ -107,11 +103,11 @@ namespace Residuum.Services
             return bestMythic;
         }
 
-        private async Task UpdateGuildMembersCache(CacheContext context)
+        private async Task UpdateGuildMembersCache()
         {
             var guildMembers = await GetGuildMembersFromApi();
 
-            _cachedGuildMembersAccessor.SetGuildMembers(context, guildMembers);
+            _cachedGuildMembersAccessor.SetGuildMembers(guildMembers);
         }
 
         private async Task<IEnumerable<GuildMember>> GetGuildMembersFromApi()
@@ -141,11 +137,11 @@ namespace Residuum.Services
             };
         }
 
-        private async Task UpdateRaidProgress(CacheContext context)
+        private async Task UpdateRaidProgress()
         {
             RaidProgress progression = await GetRaidProgressFromApi();
 
-            _cachedRaidProgressAccessor.SetRaidProgress(context, progression);
+            _cachedRaidProgressAccessor.SetRaidProgress(progression);
         }
 
         private async Task<RaidProgress> GetRaidProgressFromApi()
@@ -168,15 +164,7 @@ namespace Residuum.Services
         {
             var updatedBestMythic = await GetBestMythicFromApi(realm, player);
 
-            /*using (var context = new CacheContext())
-            {
-                var bestMythic = context.BestMythicRuns.Find(player).MythicRun;
-
-                bestMythic.Item = updatedBestMythic;
-                bestMythic.LastUpdated = DateTime.Now;
-
-                await context.SaveChangesAsync();
-            }*/
+            _cachedBestMythicAccessor.SetBestMythic(player, updatedBestMythic);
         }
 
         public async Task<Mythic> GetBestMythicFromApi(string realm, string player)
