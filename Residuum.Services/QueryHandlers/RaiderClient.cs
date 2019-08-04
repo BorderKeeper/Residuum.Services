@@ -10,12 +10,12 @@ namespace Residuum.Services.QueryHandlers
 {
     public class RaiderClient
     {
-        public async Task<RaidProgress> GetGuildProgress(string realmName, string guildName)
+        public async Task<RaidProgressWithDictionary> GetGuildProgress(string realmName, string guildName)
         {
             var fieldName = "raid_progression";
             var url = $"https://raider.io/api/v1/guilds/profile?region=eu&realm={realmName}&name={guildName}&fields={fieldName}";
 
-            return await RetrieveData<RaidProgress>(url);
+            return await RetrieveData<RaidProgressWithDictionary>(url);
         }
 
         public async Task<Mythic> GetBestMythic(string realmName, string playerName)

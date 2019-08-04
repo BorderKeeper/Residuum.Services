@@ -1,10 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 
 namespace Residuum.Services.Entities
 {
     public class RaidProgress
     {
+        public RaidProgress()
+        {
+            LastUpdated = DateTime.Now;
+        }
+
+        [Key]
         [JsonProperty("name")]
         public string Name { get; set; }
 
@@ -21,6 +29,8 @@ namespace Residuum.Services.Entities
         public string URL { get; set; }
 
         [JsonProperty("raid_progression")]
-        public Dictionary<string, Progression> RaidInfo { get; set; }
+        public List<Progression> RaidInfo { get; set; }
+
+        public DateTime LastUpdated { get; set; }
     }
 }

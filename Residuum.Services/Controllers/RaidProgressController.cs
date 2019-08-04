@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Residuum.Services.Database;
 using Residuum.Services.Entities;
 
 namespace Residuum.Services.Controllers
@@ -20,10 +21,17 @@ namespace Residuum.Services.Controllers
             "trial-of-valor"
         };
 
+        private readonly DataCache _cache;
+
+        public RaidProgressController(CacheContext context)
+        {
+            _cache = new DataCache(context);
+        }
+
         [HttpGet]
         public async Task<string> Get()
         {
-            var progression = await DataAccessLayer.GetRaidProgress();
+            var progression = await _cache.GetRaidProgress();
 
             var filteredProgression = FilterProgression(progression);
 
@@ -34,23 +42,23 @@ namespace Residuum.Services.Controllers
 
         private List<OutputRaidInfo> FilterProgression(RaidProgress progression)
         {
-            var selectedRaids = progression.RaidInfo.Where(raid => !IgnoreList.Contains(raid.Key));
+            var selectedRaids = progression.RaidInfo.Where(raid => !IgnoreList.Contains(raid.RaidName));
 
             if (ServiceConfiguration.OverrideRaidProgressionSummary)
             {
                 ReplaceDefaultSummarySectionWithHeroicProgression(selectedRaids);
             }
 
-            return selectedRaids.Select(raid => new OutputRaidInfo { Key = raid.Key, Summary = raid.Value.Summary }).ToList();
+            return selectedRaids.Select(raid => new OutputRaidInfo { Key = raid.RaidName, Summary = raid.Details.Summary }).ToList();
         }
 
-        private static void ReplaceDefaultSummarySectionWithHeroicProgression(IEnumerable<KeyValuePair<string, Progression>> selectedRaids)
+        private static void ReplaceDefaultSummarySectionWithHeroicProgression(IEnumerable<Progression> selectedRaids)
         {
-            foreach (KeyValuePair<string, Progression> selectedRaid in selectedRaids)
+            foreach (Progression selectedRaid in selectedRaids)
             {
-                if (selectedRaid.Value.HeroicBossesKilled != 0)
+                if (selectedRaid.Details.HeroicBossesKilled != 0)
                 {
-                    selectedRaid.Value.Summary = $"{selectedRaid.Value.HeroicBossesKilled}/{selectedRaid.Value.TotalBosses} H";
+                    selectedRaid.Details.Summary = $"{selectedRaid.Details.HeroicBossesKilled}/{selectedRaid.Details.TotalBosses} H";
                 }               
             }
         }

@@ -1,19 +1,24 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using Newtonsoft.Json;
 
 namespace Residuum.Services.Entities
 {
     public class Mythic
     {
-        public static Mythic EmptyMythic
+        public Mythic()
         {
-            get { return new Mythic {Difficulty = 0, Upgrades = 0, Name = "None", ShortName = "N", ProfileUri = string.Empty}; }
+            LastUpdated = DateTime.Now;
         }
 
-        [JsonProperty("dungeon")]
-        public string Name { get; set; }
-
+        [Key]
+        public string Id { get; set; }
+      
         [JsonProperty("short_name")]
-        public string ShortName { get; set; }
+        public string DungeonShortName { get; set; }
+
+        [JsonProperty("dungeon")]
+        public string DungeonName { get; set; }
 
         [JsonProperty("mythic_level")]
         public int Difficulty { get; set; }
@@ -22,5 +27,12 @@ namespace Residuum.Services.Entities
         public int Upgrades { get; set; }
         
         public string ProfileUri { get; set; }
+
+        public DateTime LastUpdated { get; set; }
+
+        public static Mythic EmptyMythic
+        {
+            get { return new Mythic { Difficulty = 0, Upgrades = 0, DungeonName = "None", DungeonShortName = "N", ProfileUri = string.Empty, LastUpdated = DateTime.Now }; }
+        }
     }
 }
